@@ -1,0 +1,59 @@
+[project]
+name = "kabayan-pintar"
+version = "2.0.0"
+description = "AI-powered learning workspace (Kabayan Pintar) - Modular Edition"
+requires-python = ">=3.12"
+dependencies = [
+    # Core — dibutuhkan AI Chat, Tutor, Flashcard, Quiz
+    "fastapi>=0.162.0",
+    "uvicorn",
+    "sqlalchemy",
+    "alembic",
+    "python-dotenv",
+    "groq",
+    "langchain-core",
+    "langchain-groq",
+    "requests",
+    "urllib3>=2.8.0",
+    "pillow>=13.0.0",
+    "aiohttp>=3.14.4",
+    "certifi>=2026.10.19",
+    "httpx2>=2.12.0",
+    "langgraph-sdk>=0.4.4",
+    "mako>=1.4.2",
+    "multidict>=6.9.1",
+    "python-multipart",
+    "fsrs",
+]
+
+[project.optional-dependencies]
+# Local RAG — dipasang hanya saat user butuh fitur pencarian vektor
+rag = [
+    "fastembed>=0.9.1",
+    "lancedb>=0.41.0",
+    "numpy",
+    "pyarrow",
+]
+
+# Pemrosesan dokumen (PDF, DOCX, XLSX, PPTX)
+documents = [
+    "pymupdf",
+    "python-docx",
+    "openpyxl",
+    "python-pptx",
+]
+
+# Media (YouTube, TTS)
+media = [
+    "yt-dlp",
+    "youtube-transcript-api",
+    "edge-tts>=7.3.1",
+    "imageio-ffmpeg>=0.5.0",
+]
+
+# Development
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+]

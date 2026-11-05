@@ -14,11 +14,11 @@ import MiniAudioPlayer from '@/components/audio/MiniAudioPlayer';
 import { useAppStore, useFocusStore } from '@/store';
 import { useJobStore, cancelJobByKey } from '@/store/jobStore';
 import { useTranslation } from 'react-i18next';
-
 import { profileAPI, materiAPI, audioAPI } from '@/services/api';
 import { setAppLanguage, STORAGE_KEY } from '@/i18n';
 import { extractErrorMessage } from '@/utils/errors';
 import { useToast } from '@/components/Toast';
+import { setupInstallIdentity } from '@/lib/installIdentity';
 
 const OP_LABELS = [
   ['chat', 'appLayout.opChat'],
@@ -106,6 +106,11 @@ export default function AppLayout() {
   const isFocusMode = useFocusStore((s) => s.isFocusMode);
   const focusActivity = useFocusStore((s) => s.focusActivity);
   const exitFocus = useFocusStore((s) => s.exitFocus);
+
+  // Inisialisasi install identity: deteksi fresh install dan bersihkan chat lokal yang stale.
+  useEffect(() => {
+    setupInstallIdentity();
+  }, []);
 
   // Tutup drawer mobile (UnifiedSidebar) saat pindah halaman.
   useEffect(() => {

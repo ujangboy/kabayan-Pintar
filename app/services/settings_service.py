@@ -41,7 +41,7 @@ class SettingsService:
         setting_repository.set_value(db, key, str(value), description)
 
     def get_embedding_model(self, db: Session) -> str:
-        return self.get_setting(db, SETTING_KEY_EMBEDDING_MODEL, "all-MiniLM-L6-v2")
+        return self.get_setting(db, SETTING_KEY_EMBEDDING_MODEL, "sentence-transformers/all-MiniLM-L6-v2")
 
     def set_embedding_model(self, db: Session, model_name: str):
         self.set_setting(db, SETTING_KEY_EMBEDDING_MODEL, model_name)

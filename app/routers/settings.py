@@ -9,7 +9,7 @@ router = APIRouter()
 
 # Allowlist model embedding yang diizinkan — nilai bebas dari client bisa
 # membuat loading model gagal saat dipakai (dan mengacaukan cache hash).
-ALLOWED_EMBEDDING_MODELS = {"all-MiniLM-L6-v2", "paraphrase-multilingual-MiniLM-L12-v2"}
+ALLOWED_EMBEDDING_MODELS = {"sentence-transformers/all-MiniLM-L6-v2", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"}
 
 @router.get("/api/settings")
 async def get_settings(db: Session = Depends(get_db)):

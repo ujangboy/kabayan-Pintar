@@ -17,6 +17,12 @@ if not GROQ_API_KEY:
         "GROQ_API_KEY belum diatur — fitur AI (chat, tutor, quiz, exam) tidak akan "
         "berfungsi. Isi file .env dan restart backend."
     )
+elif GROQ_API_KEY.startswith("<") and GROQ_API_KEY.endswith(">"):
+    logging.error(
+        "[SECRET-FORMAT] GROQ_API_KEY masih placeholder dari .env.example "
+        "(%s). Ganti dengan key asli dari https://console.groq.com/keys "
+        "lalu restart backend.", GROQ_API_KEY
+    )
 elif not re.fullmatch(r"gsk_[A-Za-z0-9]{20,}", GROQ_API_KEY):
     # Fail-loud: key salah format (mis. terpotong, typo, atau key dari
     # screenshot yang tidak lengkap) akan membuat semua request Groq gagal.
@@ -39,8 +45,10 @@ GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "qwen/qwen3.8-27b")
 CHAT_IMAGE_MAX_MB = 10
 CHAT_IMAGE_MAX_DIM = 2048
 
-# We use sentence-transformers locally for embeddings
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+# FastEmbed (ONNX Runtime) digunakan untuk embedding lokal.
+# Model: sentence-transformers/all-MiniLM-L6-v2 (384 dimensi), setara
+# dengan model Sentence Transformers lama (all-MiniLM-L6-v2).
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 TEMPERATURE = 0.2
 
 # --- Chunking Constants ---

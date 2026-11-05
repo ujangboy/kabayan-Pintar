@@ -1,39 +1,139 @@
 #!/usr/bin/env bash
-# scripts/install.sh — One-liner installer untuk Kabayan Pintar
-# Gunakan setelah clone atau ekstrak ZIP, di dalam folder proyek.
-#   bash scripts/install.sh
+# install.sh — Installer modular Kabayan Pintar (Linux / WSL)
+# Penggunaan:
+#   bash install.sh                        # instalasi core saja
+#   bash install.sh --install              # sama di atas
+#   bash install.sh --fresh                # backup .env + storage lalu install
+#   bash install.sh feature rag            # pasang extra RAG
+#   bash install.sh feature documents      # pasang extra dokumen
+#   bash install.sh feature media          # pasang extra media
+#   bash install.sh feature all            # pasang semua extra
 set -euo pipefail
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$DIR"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$DIR/.."
 
-echo "==> [1/4] Menyalin .env.example -> .env (isi GROQ_API_KEY Anda di .env)"
-cp -n .env.example .env 2>/dev/null || true
+# ── Helper ──────────────────────────────────────────────────────────
+log()  { echo "==> $*"; }
+err()  { echo "[!] $*" >&2; exit 1; }
 
-echo "==> [2/4] Membuat venv Python + install dependensi backend"
-if [ ! -d venv ]; then
-  python3 -m venv venv
-fi
-# shellcheck disable=SC1091
-. venv/bin/activate
-pip install -q -r requirements.txt
+# ── Cek Python 3.12 ────────────────────────────────────────────────
+check_python() {
+    if ! command -v python3 >/dev/null 2>&1; then
+        err "Python 3 tidak ditemukan. Silakan install Python 3.12 terlebih dahulu."
+    fi
+    local ver
+    ver=$(python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+' || true)
+    if [ -n "$ver" ] && [ "$ver" != "3.12" ]; then
+        echo "[!] Peringatan: Python $ver terdeteksi, target 3.12. Lanjutkan comunque."
+    fi
+}
 
-echo "==> [3/4] Install dependensi frontend (npm ci)"
-(cd frontend && npm ci --silent)
+# ── Cek / pasang uv ────────────────────────────────────────────────
+ensure_uv() {
+    if command -v uv >/dev/null 2>&1; then
+        return
+    fi
+    # Fallback: uv sudah ada di ~/.local/bin (default pip/install.sh)
+    if [ -x "$HOME/.local/bin/uv" ]; then
+        export PATH="$HOME/.local/bin:$PATH"
+        return
+    fi
+    log "uv belum ditemukan, memasang uv..."
+    if command -v curl >/dev/null 2>&1; then
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO- https://astral.sh/uv/install.sh | sh
+    else
+        err "curl/wget tidak ditemukan. Pasang uv secara manual: https://github.com/astral-sh/uv"
+    fi
+    export PATH="$HOME/.local/bin:$PATH"
+}
 
-echo "==> [4/4] Pasang perintah 'kp' ke ~/.local/bin"
-chmod +x "$DIR/kp"
-mkdir -p "$HOME/.local/bin"
-ln -sf "$DIR/kp" "$HOME/.local/bin/kp"
-case ":$PATH:" in
-  *":$HOME/.local/bin:"*) ;;
-  *) echo "[!] Tambahkan ini ke ~/.bashrc lalu buka terminal baru:"
-     echo "    export PATH=\"\$HOME/.local/bin:\$PATH\"" ;;
+# ── Buat virtual environment ───────────────────────────────────────
+ensure_venv() {
+    if [ ! -d ".venv" ]; then
+        log "Membuat virtual environment (.venv)..."
+        uv venv .venv
+        return
+    fi
+    if [ ! -f ".venv/bin/activate" ]; then
+        err ".venv yang ada bukan environment Linux/Mac (kemungkinan hasil Windows). Rename jadi .venv-win atau hapus, lalu jalankan installer lagi."
+    fi
+}
+
+# ── Pasang dependensi ──────────────────────────────────────────────
+install_deps() {
+    local groups="$1"
+    log "Memasang dependensi: $groups"
+    # shellcheck disable=SC1091
+    . .venv/bin/activate
+    if [ "$groups" = "core" ]; then
+        uv sync
+    else
+        uv sync --extra "$groups"
+    fi
+}
+
+# ── Backup data user untuk install fresh ─────────────────────────────
+backup_user_data() {
+    local out="${APPDATA:-}"
+    if [ -f .env ] && [ ! -f .env.fresh.bak ]; then
+        cp .env .env.fresh.bak
+        log ".env lama disimpan ke .env.fresh.bak"
+    fi
+    if [ -d storage ] && [ ! -d storage.fresh.bak ]; then
+        cp -a storage storage.fresh.bak
+        log "storage/ lama disimpan ke storage.fresh.bak"
+    fi
+}
+
+# ── Simpan konfigurasi fitur yang terpasang ─────────────────────────
+save_feature() {
+    local feature="$1"
+    local state_file=".kp-installed-features"
+    if [ ! -f "$state_file" ] || ! grep -qx "$feature" "$state_file"; then
+        echo "$feature" >> "$state_file"
+    fi
+}
+
+# ── Main ────────────────────────────────────────────────────────────
+case "${1:-core}" in
+    core|--install|install)
+        check_python
+        ensure_uv
+        ensure_venv
+        install_deps core
+        save_feature core
+        log "Instalasi core selesai. Jalankan './kp start' untuk memulai aplikasi."
+        ;;
+    --fresh|fresh)
+        check_python
+        backup_user_data
+        ensure_uv
+        ensure_venv
+        install_deps core
+        save_feature core
+        log "Instalasi fresh selesai. Data lama disimpan di .env.fresh.bak dan storage.fresh.bak."
+        ;;
+    feature)
+        shift || true
+        local feature="${1:-}"
+        case "$feature" in
+            rag|documents|media|all)
+                check_python
+                ensure_uv
+                ensure_venv
+                install_deps "$feature"
+                save_feature "$feature"
+                log "Fitur '$feature' terpasang. Jalankan './kp start' untuk memulai aplikasi."
+                ;;
+            *)
+                err "Fitur tidak dikenal: '$feature'. Pilihan: rag, documents, media, all"
+                ;;
+        esac
+        ;;
+    *)
+        err "Penggunaan: bash install.sh [core|--install|--fresh|feature <rag|documents|media|all>]"
+        ;;
 esac
-
-echo ""
-echo "Selesai. Buka terminal baru lalu ketik:"
-echo "  kp              # mulai backend (8000) + frontend (5173)"
-echo "Atau secara manual:"
-echo "  source venv/bin/activate && uvicorn app.main:app --reload --port 8000"
-echo "  cd frontend && npm run dev"

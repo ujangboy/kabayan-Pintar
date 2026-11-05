@@ -38,6 +38,19 @@ logs/
 # Audio generated
 static/audio/
 
+# Foto profil hasil upload user
+static/profile/
+
+# Backup dari ./kp --fresh (berisi data user)
+storage.fresh.bak/
+.env.fresh.bak
+
+# Marker fitur terpasang (lokal, bukan bagian rilis)
+.kp-installed-features
+
+# Direktori kerja agent (bukan sumber rilis)
+docs/superpowers/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -55,7 +68,10 @@ htmlcov/
 .playwright-mcp/
 
 # Frontend build output (sudah ada di frontend/.gitignore tapi jaga-jaga)
+# frontend/dist/ sengaja di-TRACK (kecualikan dari ignore) untuk distribusi
+# produksi agar pengguna biasa tidak perlu Node.js.
 frontend/dist/
+!frontend/dist/
 frontend/node_modules/
 
 # Vite cache (dibuat di root saat dev server berjalan)

@@ -25,8 +25,12 @@ def fix_stuck_materials():
     # Lazy-load dulu: tanpa ini chunk_metadata masih kosong saat fungsi
     # dipanggil di import time, sehingga materi yang sebenarnya sudah
     # ter-index tetapi file-nya hilang selalu dianggap gagal.
+    # Jika dependensi RAG belum terpasang (instalasi core), lewati diam-diam
+    # agar backend tetap bisa nyala tanpa FastEmbed / LanceDB.
     try:
         _rag._ensure_loaded()
+    except ImportError as exc:
+        logger.info(f"fix_stuck_materials: dependensi RAG belum terpasang, lewati ({exc})")
     except Exception as exc:
         logger.warning(f"fix_stuck_materials: gagal memuat index RAG: {exc}")
 
@@ -88,9 +92,17 @@ except Exception as e:
     # alembic_version belum ada. Selain kasus itu, kegagalan upgrade = drift
     # skema nyata — JANGAN stamp (dulu menyamarkan drift secara permanen).
     try:
-        from sqlalchemy import inspect as sa_inspect
+        from sqlalchemy import inspect as sa_inspect, text
         insp = sa_inspect(engine)
         versioned = insp.has_table("alembic_version")
+        if versioned:
+            # Tabel version bisa sudah dibuat oleh upgrade yang gagal sebelum
+            # migrasi 001 sempat menulis revision. Tabel kosong = belum
+            # ter-versioning, jadi masih jalur bootstrap yang sah.
+            with engine.connect() as conn:
+                versioned = conn.execute(
+                    text("SELECT 1 FROM alembic_version LIMIT 1")
+                ).first() is not None
     except Exception:
         versioned = True  # tak bisa memastikan → perlakukan sebagai drift
     if not versioned:

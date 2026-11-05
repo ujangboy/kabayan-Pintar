@@ -3,17 +3,14 @@ import re
 import json
 import hashlib
 import logging
-import numpy as np
-import lancedb
 import threading
 import datetime
+from typing import List, Optional
 from app.time_utils import utcnow
-import pandas as pd
-import pyarrow as pa
-from langchain_huggingface import HuggingFaceEmbeddings
 from app import config
 from app.services.settings_service import settings_service
 from app.database import SessionLocal
+from app.services.embedding import FastEmbedProvider, model_manager
 
 TABLE_NAME = "chunks"
 logger = logging.getLogger(__name__)
@@ -94,13 +91,17 @@ def _score_candidates(rows: list, query_tokens: list) -> list:
     return scored
 
 
-def _table_schema(dim: int) -> pa.Schema:
+def _table_schema(dim: int):
     """Skema eksplisit tabel LanceDB.
 
     Penting: timestamp_start/end bertipe int64 NULLABLE (bukan null/infer),
     agar chunk dokumen (tanpa timestamp) dan chunk YouTube (ber-timestamp)
     bisa hidup dalam tabel yang sama.
+
+    Diimpor lazy karena pyarrow adalah dependensi RAG, bukan core.
     """
+    import pyarrow as pa
+
     return pa.schema([
         pa.field("id", pa.int64(), nullable=False),
         pa.field("vector", pa.list_(pa.float32(), dim), nullable=False),
@@ -129,9 +130,40 @@ def _nan_to_none(val):
     if val is None:
         return None
     try:
+        import pandas as pd  # lazy import (dependensi RAG)
+
         return None if pd.isna(val) else val
     except Exception:
         return val
+
+
+def _check_rag_deps() -> None:
+    """Verifikasi dependensi RAG tersedia. Jika tidak, raise error dengan
+    instruksi instalasi yang jelas agar user tahu harus jalankan
+    `kp feature rag` (atau `./kp feature rag`)."""
+    missing = []
+    try:
+        import lancedb  # noqa: F401
+    except ImportError:
+        missing.append("lancedb")
+    try:
+        import fastembed  # noqa: F401
+    except ImportError:
+        missing.append("fastembed")
+    try:
+        import numpy  # noqa: F401
+    except ImportError:
+        missing.append("numpy")
+
+    if missing:
+        raise ImportError(
+            "Fitur RAG membutuhkan dependensi tambahan yang belum terpasang: "
+            + ", ".join(missing)
+            + ".\nSilakan pasang dengan:\n"
+            "  Linux/WSL : ./kp feature rag\n"
+            "  Windows   : .\\kp.cmd feature rag\n"
+            "Atau pasang semua fitur: ./kp feature all"
+        )
 
 
 class RAGService:
@@ -145,6 +177,7 @@ class RAGService:
     - Model versioning per chunk
     - Thread-safe operations
     - 0 token LLM untuk indexing (hanya embedding)
+    - Lazy impor dependensi RAG: backend core bisa nyala tanpa FastEmbed.
     """
 
     def __init__(self):
@@ -166,6 +199,9 @@ class RAGService:
 
     def _ensure_loaded(self):
         """Muat index LanceDB secara lazy (B8), thread-safe via RLock."""
+        _check_rag_deps()
+        import lancedb  # lazy import
+
         with self._lock:
             if not self._loaded:
                 self._load_index()
@@ -173,30 +209,31 @@ class RAGService:
 
     # ── Embedder ──────────────────────────────────────────────────────
 
-    def _get_embedder(self):
-        db = SessionLocal()
-        model_name = settings_service.get_embedding_model(db)
-        db.close()
-
-        if self._cached_embedder is None or self._cached_model_name != model_name:
-            self._cached_embedder = HuggingFaceEmbeddings(model_name=model_name)
-            self._cached_model_name = model_name
-
+    def _get_embedder(self) -> FastEmbedProvider:
+        """Kembalikan FastEmbedProvider (adapter). Diciptakan lazy saat
+        pertama kali dibutuhkan, bukan saat import modul."""
+        if self._cached_embedder is None or self._cached_model_name != self._model_name_from_settings():
+            self._cached_embedder = FastEmbedProvider()
+            self._cached_model_name = self._model_name_from_settings()
         return self._cached_embedder
 
-    def get_embedding_model_name(self) -> str:
-        if self._cached_model_name:
-            return self._cached_model_name
+    def _model_name_from_settings(self) -> str:
         db = SessionLocal()
         try:
             return settings_service.get_embedding_model(db)
         finally:
             db.close()
 
+    def get_embedding_model_name(self) -> str:
+        if self._cached_model_name:
+            return self._cached_model_name
+        return self._model_name_from_settings()
+
     def get_embedding_model_version(self) -> str:
         return _embedding_model_version(self.get_embedding_model_name())
 
     def check_model_compatibility(self) -> dict:
+        _check_rag_deps()
         with self._lock:
             self._ensure_loaded()
             current_model = self.get_embedding_model_name()
@@ -224,9 +261,13 @@ class RAGService:
 
     def _load_index(self):
         with self._lock:
+            import lancedb  # lazy import
+
             self._db = lancedb.connect(config.LANCEDB_DIR)
             try:
                 self._table = self._db.open_table(TABLE_NAME)
+                import pandas as pd  # lazy import
+
                 df = self._table.to_pandas()
                 if df.empty:
                     self.chunk_metadata = []
@@ -263,7 +304,15 @@ class RAGService:
                     self.dimension = len(vec_col)
 
             except Exception as exc:
-                logger.warning("Gagal memuat index LanceDB: %r", exc)
+                if "was not found" in str(exc):
+                    # Normal di instalasi baru: tabel dibuat saat materi
+                    # pertama di-index (lihat index_document).
+                    logger.info(
+                        "Index RAG kosong — tabel '%s' belum ada; akan dibuat "
+                        "saat materi pertama di-index.", TABLE_NAME
+                    )
+                else:
+                    logger.warning("Gagal memuat index LanceDB: %r", exc)
                 self._table = None
                 self.chunk_metadata = []
                 self.doc_to_chunk_indices = {}
@@ -276,6 +325,9 @@ class RAGService:
     # ── Index Document ───────────────────────────────────────────────
 
     def index_document(self, doc_id: str, chunks: list):
+        _check_rag_deps()
+        import numpy as np  # lazy import
+
         if not chunks:
             return
 
@@ -372,6 +424,10 @@ class RAGService:
     # ── Delete (lazy) ────────────────────────────────────────────────
 
     def delete_document_chunks(self, doc_id: str):
+        _check_rag_deps()
+        import lancedb  # lazy import (sudah dicek oleh _check_rag_deps, tapi
+                        # perlu untuk type hint / referensi di metode ini)
+
         with self._lock:
             self._ensure_loaded()
             doc_id = _sanitize_doc_id(doc_id)
@@ -388,6 +444,7 @@ class RAGService:
                     self._table.cleanup_old_versions()
                 except Exception as e:
                     import logging
+
                     logging.warning(f"LanceDB delete/compact failed: {e}")
 
             for meta in self.chunk_metadata:
@@ -401,6 +458,9 @@ class RAGService:
     # ── Search ───────────────────────────────────────────────────────
 
     def search(self, query: str, active_doc_ids: list = None, top_k: int = 5) -> dict:
+        _check_rag_deps()
+        import numpy as np  # lazy import
+
         with self._lock:
             self._ensure_loaded()
             if self._table is None or not self.chunk_metadata:
@@ -463,6 +523,9 @@ class RAGService:
         return ratio >= self._rebuild_threshold
 
     def rebuild_index(self):
+        _check_rag_deps()
+        import numpy as np  # lazy import
+
         with self._lock:
             self._ensure_loaded()
             if not self.chunk_metadata:
@@ -470,6 +533,8 @@ class RAGService:
                 self.doc_to_chunk_indices = {}
                 self._deleted_doc_ids = set()
                 try:
+                    import lancedb  # lazy import
+
                     self._db.drop_table(TABLE_NAME)
                 except Exception:
                     pass
@@ -482,6 +547,8 @@ class RAGService:
                 self.doc_to_chunk_indices = {}
                 self._deleted_doc_ids = set()
                 try:
+                    import lancedb  # lazy import
+
                     self._db.drop_table(TABLE_NAME)
                 except Exception:
                     pass
@@ -526,6 +593,8 @@ class RAGService:
                 new_metadata.append(meta)
 
             try:
+                import lancedb  # lazy import
+
                 self._db.drop_table(TABLE_NAME)
             except Exception:
                 pass
@@ -540,6 +609,7 @@ class RAGService:
     # ── Stats ────────────────────────────────────────────────────────
 
     def get_stats(self):
+        _check_rag_deps()
         with self._lock:
             self._ensure_loaded()
             total = len(self.chunk_metadata)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Kabayan Pintar v2 Launcher — versi WSL / Linux
+# Kabayan Pintar — Launcher versi WSL / Linux
 # Pengganti jalankan_kabayan.bat (cmd)
 
 set -e
@@ -8,7 +8,7 @@ set -e
 cd "$(dirname "$0")"
 
 echo "========================================="
-echo "      MENYALAKAN KABAYAN PINTAR v2..."
+echo "      MENYALAKAN KABAYAN PINTAR "
 echo "========================================="
 echo ""
 
@@ -18,7 +18,7 @@ if [ -x "./venv/bin/python" ]; then
   PIP="./venv/bin/pip"
 else
   PYTHON="python3"
-  PIP="pip3"
+  PIP="python3 -m pip"
 fi
 
 # --- Aktifkan venv agar PATH 'python' (dipakai npm run dev:all) menunjuk venv ---

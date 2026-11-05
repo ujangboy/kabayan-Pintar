@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="id" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico?v=4" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/favicon-kabayan.svg?v=4" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=4" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=4" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=4" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Kabayan Pintar — Ruang belajar cerdas dengan AI" />
+    <meta name="theme-color" content="#f7f9f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#101815" media="(prefers-color-scheme: dark)" />
+    <title>Kabayan Pintar</title>
+    <script>
+      // Anti-FOUC: set tema sebelum paint. Sumber: appTheme (id registry
+      // lib/themes.js) + appThemeMode (mode gelap/terang, ditulis applyTheme).
+      // Fallback: key legacy 'theme' lalu prefers-color-scheme (default dark).
+      (function () {
+        try {
+          var id = localStorage.getItem('appTheme');
+          var mode = localStorage.getItem('appThemeMode');
+          if (!id || !mode) {
+            mode = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            var legacy = localStorage.getItem('theme');
+            if (legacy === 'light' || legacy === 'dark') mode = legacy;
+            id = mode === 'light' ? 'kabayan-light' : 'kabayan-dark';
+          }
+          // id valid + mode hilang (tulis parsial): cukup data-theme —
+          // token theme block lengkap; class/colorScheme ikut markup/CSS.
+          document.documentElement.setAttribute('data-theme', id);
+          if (mode) {
+            document.documentElement.classList.toggle('dark', mode === 'dark');
+            document.documentElement.style.colorScheme = mode;
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-BA4Yp1Y_.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-BWaJ3C7D.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-DzIIt8G6.js">
+    <link rel="modulepreload" crossorigin href="/assets/query-BlsZuX5U.js">
+    <link rel="modulepreload" crossorigin href="/assets/motion-Cbp9b9X9.js">
+    <link rel="modulepreload" crossorigin href="/assets/html-pipeline-B1mmNlYx.js">
+    <link rel="modulepreload" crossorigin href="/assets/editor-cZbNOcKP.js">
+    <link rel="modulepreload" crossorigin href="/assets/i18n-VBbbf26P.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-B9ZlSq-w.js">
+    <link rel="modulepreload" crossorigin href="/assets/radix-7P5OqWme.js">
+    <link rel="modulepreload" crossorigin href="/assets/api-qLXSHDd4.js">
+    <link rel="stylesheet" crossorigin href="/assets/vendor-CB7kvjwH.css">
+    <link rel="stylesheet" crossorigin href="/assets/index-BHAxLi6n.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

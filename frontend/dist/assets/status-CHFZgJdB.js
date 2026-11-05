@@ -1,0 +1,1 @@
+var e={Ready:`materi.statusReady`,Pending:`materi.statusPending`,Processing:`materi.statusProcessing`,Failed:`materi.statusFailed`,Trashed:`materi.statusTrashed`};function t(t,n){let r=e[n];return r?t(r):n}export{t};

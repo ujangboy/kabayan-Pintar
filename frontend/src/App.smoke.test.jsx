@@ -50,6 +50,6 @@ describe('App smoke render', () => {
         </TooltipProvider>
       </QueryClientProvider>
     );
-    await waitFor(() => expect(screen.queryByText(/error/i)).toBeNull(), { timeout: 3000 });
+    await waitFor(() => expect(screen.queryByText(/error|Terjadi Kesalahan/i)).toBeNull(), { timeout: 3000 });
   });
 });
