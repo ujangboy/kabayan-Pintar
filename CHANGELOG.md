@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.4.0...v0.5.0) (2026-11-07)
+
+
+### Features
+
+* launcher prompt GROQ_API_KEY satu-satu, peringatan AI chat-only, kp/kabayan global ([53a90d1](https://github.com/ujangboy/kabayan-Pintar/commit/53a90d1ba1544b29d44c083f7475f901cd0004fd))
+* modular installation with uv and prebuilt frontend ([b8eeabf](https://github.com/ujangboy/kabayan-Pintar/commit/b8eeabff0cc0289efa1c191c149c1943c3c7ea0f))
+
 ## [0.4.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.3.0...v0.4.0) (2026-10-30)
 
 
