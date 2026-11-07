@@ -53,7 +53,27 @@ function Save-Feature ([string]$f) {
 
 # Daftarkan folder proyek ke PATH user (idempoten) agar `kp`/`kabayan`
 # bisa diketik dari terminal mana saja setelah install. Tidak perlu manual.
+# Sambil itu, perbaiki shim lama WindowsApps\kp.cmd yang menunjuk repo lama
+# (kabayan-agent / Ubuntu-24.04) yang membuat `kp start` error
+# WSL_E_DISTRO_NOT_FOUND padahal `kabayan` jalan.
+function Repair-Stale-Kp-Shim {
+    $wa = Join-Path $env:LOCALAPPDATA "Microsoft\WindowsApps"
+    foreach ($name in @("kp.cmd", "kabayan.cmd")) {
+        $p = Join-Path $wa $name
+        if (Test-Path $p) {
+            $txt = Get-Content -Raw -LiteralPath $p -ErrorAction SilentlyContinue
+            if ($txt -and ($txt -match 'kabayan-agent|Ubuntu-24\.04')) {
+                $bak = "$p.bak"
+                if (Test-Path $bak) { Remove-Item -LiteralPath $bak -Force }
+                Rename-Item -LiteralPath $p -NewName ([IO.Path]::GetFileName($bak))
+                Log "Shim lama $name (kabayan-agent/Ubuntu-24.04) dinonaktifkan ke .bak agar kp dari folder proyek yang dipakai."
+            }
+        }
+    }
+}
+
 function Register-Kp-Path {
+    Repair-Stale-Kp-Shim
     $p = Join-Path $DIR "install_windows_path.ps1"
     if (Test-Path $p) {
         & $p

@@ -21,10 +21,24 @@ import threading
 import tempfile
 import subprocess
 
-import edge_tts
-import edge_tts.communicate as edge_communicate
-from edge_tts.constants import TRUSTED_CLIENT_TOKEN
-from imageio_ffmpeg import get_ffmpeg_exe
+try:
+    import edge_tts
+    import edge_tts.communicate as edge_communicate
+    from edge_tts.constants import TRUSTED_CLIENT_TOKEN
+    HAS_EDGE_TTS = True
+except ImportError:
+    edge_tts = None
+    edge_communicate = None
+    TRUSTED_CLIENT_TOKEN = ""
+    HAS_EDGE_TTS = False
+
+try:
+    from imageio_ffmpeg import get_ffmpeg_exe
+    FFMPEG = get_ffmpeg_exe()
+except ImportError:
+    get_ffmpeg_exe = None
+    FFMPEG = None
+    HAS_EDGE_TTS = False
 
 from app.database import SessionLocal
 from app.models import AudioGeneration
@@ -35,7 +49,7 @@ from app import config
 AUDIO_DIR = os.path.join(config.STORAGE_DIR, "static", "audio")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
-FFMPEG = get_ffmpeg_exe()
+_MEDIA_MISSING_MSG = "fitur media (TTS) belum terpasang. Jalankan 'kp feature media'."
 logger = logging.getLogger(__name__)
 
 # Microsoft memindahkan endpoint sintesis Edge Read Aloud dari
@@ -132,6 +146,8 @@ def _resolve_path(fp: str) -> str:
 
 def generate_audio(db, material_id, voice):
     """Buat record baru lalu jalankan generate di background thread."""
+    if not HAS_EDGE_TTS or FFMPEG is None:
+        raise ValueError(_MEDIA_MISSING_MSG)
     material = db.query(models.Material).get(material_id)
     if not material:
         raise ValueError("Materi tidak ditemukan")

@@ -1,8 +1,15 @@
-import pymupdf as fitz  # PyMuPDF (paket `fitz` lama sudah deprecated)
-import docx
 import os
-from . import pptx_parser
-from . import xlsx_parser
+
+try:
+    import pymupdf as fitz  # PyMuPDF (paket `fitz` lama sudah deprecated)
+except ImportError:
+    fitz = None
+try:
+    import docx
+except ImportError:
+    docx = None
+
+_DOCS_MISSING_MSG = "fitur documents belum terpasang. Jalankan 'kp feature documents'."
 
 def extract_text(file_path: str) -> str:
     """
@@ -21,13 +28,23 @@ def extract_text(file_path: str) -> str:
     elif ext in ['.txt', '.csv', '.md']:
         return extract_from_txt(file_path)
     elif ext == '.pptx':
+        try:
+            from . import pptx_parser
+        except ImportError:
+            return f"Error membaca PPTX: {_DOCS_MISSING_MSG}"
         return pptx_parser.parse_pptx(file_path)
     elif ext == '.xlsx':
+        try:
+            from . import xlsx_parser
+        except ImportError:
+            return f"Error membaca XLSX: {_DOCS_MISSING_MSG}"
         return xlsx_parser.extract_text(file_path)
     else:
         raise ValueError(f"Unsupported file extension: {ext}")
 
 def extract_from_pdf(file_path: str) -> str:
+    if fitz is None:
+        return f"Error membaca PDF: {_DOCS_MISSING_MSG}"
     try:
         doc = fitz.open(file_path)
         full_text = []
@@ -43,6 +60,8 @@ def extract_from_pdf(file_path: str) -> str:
         return f"Error membaca PDF: {e}"
 
 def extract_from_docx(file_path: str) -> str:
+    if docx is None:
+        return f"Error membaca DOCX: {_DOCS_MISSING_MSG}"
     try:
         doc = docx.Document(file_path)
         full_text = [para.text.strip() for para in doc.paragraphs if para.text.strip()]

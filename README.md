@@ -231,6 +231,7 @@ Rename-Item .venv .venv-linux
 
 - **`uv` tidak ditemukan** → installer otomatis mencobanya; pastikan internet.
 - **`kp` tidak ditemukan setelah install** → tutup lalu buka lagi terminal (PATH Windows baru dibaca terminal baru). Bila masih tidak ketemu, jalankan `.\kp.cmd start` dari folder proyek, atau jalankan manual sekali: `powershell -ExecutionPolicy Bypass -File scripts\install_windows_path.ps1`.
+- **`kp start` error `WSL_E_DISTRO_NOT_FOUND` padahal `kabayan` jalan** → ada shim lama `%LOCALAPPDATA%\Microsoft\WindowsApps\kp.cmd` dari repo `kabayan-agent` lama (menunjuk `Ubuntu-24.04`). Installer baru menonaktifkannya otomatis ke `.bak`; bila masih, rename manual `kp.cmd` → `kp.cmd.bak` lalu buka terminal baru dan ketik `kp start` lagi. Jangan pakai shim yang menunjuk distro/folder lama.
 - **`python` tidak ditemukan** (py/python/python3 tidak ada di PATH) → install Python 3.12 dulu, contoh: `winget install Python.Python.3.12`, lalu buka terminal baru dan jalankan `kp --install` lagi.
 - **Port 8000 sudah dipakai** → tutup aplikasi/instance lain pada port itu.
 - **Fitur AI error** → cek `GROQ_API_KEY` di `.env`.

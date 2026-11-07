@@ -176,8 +176,33 @@ def ensure_global_links() -> None:
     Idempoten. Dipanggil otomatis setelah install sukses agar pemula tidak
     perlu langkah manual — cukup tutup & buka lagi terminal lalu ketik
     'kp start' / 'kabayan start'.
+    Di Windows, shim lama WindowsApps\\kp.cmd dari repo kabayan-agent lama
+    (menunjuk Ubuntu-24.04) dinonaktifkan dulu, yang membuat `kp start`
+    error WSL_E_DISTRO_NOT_FOUND padahal `kabayan` jalan.
     """
     if os.name == "nt":
+        try:
+            wa = os.environ.get("LOCALAPPDATA", "")
+            if wa:
+                for name in ("kp.cmd", "kabayan.cmd"):
+                    p = os.path.join(wa, "Microsoft", "WindowsApps", name)
+                    if os.path.isfile(p):
+                        try:
+                            with open(p, encoding="utf-8", errors="ignore") as f:
+                                txt = f.read()
+                        except OSError:
+                            continue
+                        if "kabayan-agent" in txt or "Ubuntu-24.04" in txt:
+                            bak = p + ".bak"
+                            try:
+                                if os.path.exists(bak):
+                                    os.remove(bak)
+                                os.rename(p, bak)
+                                print(f"==> Shim lama {name} dinonaktifkan (.bak) agar kp dari folder proyek yang dipakai.")
+                            except OSError:
+                                pass
+        except Exception:
+            pass
         p = os.path.join(BASE_DIR, "scripts", "install_windows_path.ps1")
         if os.path.isfile(p):
             try:
