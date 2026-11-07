@@ -69,8 +69,18 @@ echo      MENYALAKAN KABAYAN PINTAR
 echo =========================================
 echo.
 echo Backend : http://127.0.0.1:8000
+echo Docs    : http://127.0.0.1:8000/docs
 echo Tekan Ctrl+C untuk berhenti.
 echo.
+echo Fitur   : ketik kp feature rag ^| documents ^| media ^| all
+echo Bantuan : ketik kp --help
+echo.
+
+rem Launcher python terpusat: tanya API satu-satu + banner port/fitur.
+if exist "%~dp0scripts\kp.py" (
+    python "%~dp0scripts\kp.py" start
+    exit /b %errorlevel%
+)
 
 rem Cek apakah frontend dist tersedia (production)
 if exist "frontend\dist" (

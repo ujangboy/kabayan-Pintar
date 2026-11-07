@@ -64,7 +64,9 @@ perintah `kp`.
 - Python 3.12 dianjurkan (Python 3.13 juga bisa jalan, muncul peringatan).
 - Internet untuk download package.
 - **Tidak perlu Node.js** untuk penggunaan normal.
-- Groq API key untuk fitur AI.
+- Groq API key untuk fitur AI. Tanpa key, aplikasi **tetap bisa dibuka**
+  (port 8000) tapi AI chat/tutor nonaktif — peringatan tampil di
+  halaman chat saja, fitur lain tetap bisa dipakai minimal.
 
 ### Instalasi
 
@@ -96,6 +98,30 @@ Installer akan:
 
 Dari folder proyek, jalankan `./kp` (Linux) atau `.\kp.cmd` (Windows) untuk menjalankan aplikasi.
 
+#### Dari folder mana saja (`kp` / `kabayan` global)
+
+Setelah install sekali, perintah `kp` dan `kabayan` bisa dipanggil dari
+folder mana pun — keduanya memanggil launcher python terpusat
+`scripts/kp.py` (stdlib, tanpa reinstall library).
+
+- **Linux/WSL:** symlink ke `~/.local/bin` (pastikan ada di PATH):
+  ```bash
+  ln -sf "$PWD/kp" ~/.local/bin/kp
+  ln -sf "$PWD/kabayan" ~/.local/bin/kabayan
+  kp --help   # atau ketik: kp start
+  kabayan start
+  ```
+- **Windows (PowerShell):** daftarkan folder proyek ke PATH user:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts\install_windows_path.ps1
+  # Tutup lalu buka lagi terminal, lalu:
+  kp start
+  kabayan start
+  ```
+  Tanpa langkah ini, tetap bisa jalan dari folder proyek via
+  `.\kp.cmd` / `.\kabayan.cmd`. Port tetap **8000** setelah
+  inisialisasi (lihat banner terminal).
+
 ### Menjalankan aplikasi (production)
 
 Frontend hasil build produksi sudah disertakan dalam repositori
@@ -105,10 +131,17 @@ port 8000**.
 - **Linux:** `./kp` atau `./kp start`
 - **Windows:** `.\kp`, `.\kp start`, atau `.\kp.cmd`
 
+Saat start, launcher (a) memeriksa `GROQ_API_KEY` dan menanya
+satu-satu bila belum valid, (b) menampilkan banner versi, port,
+status API, fitur terpasang, dan contoh `kp feature ...`, lalu
+(c) menyalakan backend tanpa menginstal ulang library. Setelah
+inisialisasi, port tetap **8000** seperti berikut:
+
 Backend membuka URL:
 
 - **http://127.0.0.1:8000**
 - API docs: **http://127.0.0.1:8000/docs**
+- Frontend dev (hanya mode development): **http://127.0.0.1:5173**
 
 > Jika `frontend/dist/` ada, FastAPI menyajikan UI React langsung. Node.js
 > tidak diperlukan.
@@ -147,13 +180,33 @@ tersimpan dan bisa dipulihkan.
 
 ### Pengaturan wajib sebelum fitur AI jalan
 
+**Cara termudah — lewat terminal (`kp start` akan menanya satu-satu):**
+
+1. Buka https://console.groq.com/keys di browser, buat/salin API key.
+2. Jalankan `kp start` (atau `kabayan start`) dari folder mana saja.
+3. Tempel key saat diminta (format `gsk_` + minimal 20 huruf/angka).
+4. Key tersimpan ke `.env` (hanya baris `GROQ_API_KEY` yang diubah).
+5. Tekan Enter kosong untuk lanjut **tanpa API** (AI mati, web tetap dibuka).
+
+**Cara manual — edit `.env` langsung:**
+
 ```bash
 cp .env.example .env
 # isi GROQ_API_KEY dari https://console.groq.com/keys
+# lalu restart: kp start
 ```
 
 `.env` tidak pernah di-commit. Setiap pengguna memiliki data sendiri di
 `storage/`.
+
+#### Jalan tanpa API (AI mati, web tetap dibuka)
+
+| Fitur | Dengan GROQ_API_KEY valid | Tanpa API (minimal) |
+|---|---|---|
+| Dashboard, Materi (upload/lihat), Catatan, Pengaturan, Sampah | OK | OK (tetap jalan) |
+| Chat AI, Tutor, Flashcard/Quiz via AI, Analisis ujian AI | OK | Mati — banner peringatan **hanya di halaman chat**, backend balas 503 jelas |
+| RAG lokal, pemrosesan dokumen, YouTube/TTS | OK bila `kp feature ...` terpasang | Sama, tapi tanpa AI tidak bisa generate dari dokumen |
+| Port | **8000** tetap | **8000** tetap |
 
 ### Penyimpanan & data pengguna
 

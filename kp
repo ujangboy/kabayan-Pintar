@@ -46,6 +46,11 @@ cmd_start() {
     exit 1
   fi
 
+  # Launcher python terpusat: tanya API satu-satu + banner port/fitur.
+  if [ -f "scripts/kp.py" ]; then
+    exec python3 scripts/kp.py start
+  fi
+
   echo "==> Kabayan Pintar sedang berjalan..."
   echo "    Backend : http://127.0.0.1:8000"
   echo "    Tekan Ctrl+C untuk berhenti."

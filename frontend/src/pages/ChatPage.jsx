@@ -12,6 +12,7 @@ import ChatComposer from '@/components/chat/ChatComposer';
 import { motion } from 'framer-motion';
 import { ICONS } from '@/lib/icons';
 import { Icon, Tooltip } from '@/components/ui';
+import { infoAPI } from '@/services/api';
 
 export default function ChatPage() {
   const { t } = useTranslation();
@@ -21,6 +22,12 @@ export default function ChatPage() {
   const currentChatId = useChatStore((s) => s.currentChatId);
   const chat = useChatStore((s) => s.getCurrentChat());
   const isCurrentChatStreaming = useChatStore((s) => s.streamingChatIds.includes(currentChatId));
+  const [aiEnabled, setAiEnabled] = useState(true);
+  useEffect(() => {
+    infoAPI.get()
+      .then((r) => { if (typeof r.data?.ai_enabled === 'boolean') setAiEnabled(r.data.ai_enabled); })
+      .catch(() => {});
+  }, []);
   const [historyCollapsed, setHistoryCollapsed] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia
       ? window.matchMedia('(max-width: 767px)').matches
@@ -93,6 +100,14 @@ export default function ChatPage() {
         </div>
 
         {/* Centered conversation */}
+        {!aiEnabled && (
+          <div role="alert" className="shrink-0 mx-4 sm:mx-6 mt-3 rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-xs leading-relaxed text-text">
+            <p className="font-semibold">{t('chat.aiDisabledTitle', 'AI nonaktif (tanpa GROQ_API_KEY)')}</p>
+            <p className="text-text-secondary">
+              {t('chat.aiDisabledDesc', 'Chat AI tidak bisa dipakai. Fitur lain tetap bisa dipakai. Isi GROQ_API_KEY di .env dari https://console.groq.com/keys lalu restart backend (kp start).')}
+            </p>
+          </div>
+        )}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <div className="flex-1 overflow-hidden flex flex-col min-w-0">
             <ChatMessageList
@@ -106,6 +121,7 @@ export default function ChatPage() {
           <div className="shrink-0 px-4 sm:px-6 pb-6 pt-2 bg-gradient-to-t from-base via-base/95 to-transparent">
             <div className="mx-auto w-full max-w-4xl">
               <ChatComposer
+                aiEnabled={aiEnabled}
                 onSend={sendMessage}
                 isStreaming={isCurrentChatStreaming}
                 onStop={() => abortActiveStream(currentChatId)}

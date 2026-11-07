@@ -18,7 +18,7 @@ const MAX_TEXTAREA_HEIGHT = 144;
 // Paritas dengan CHAT_IMAGE_MAX_MB backend (app/config.py).
 const MAX_IMAGE_MB = 10;
 
-export default function ChatComposer({ onSend, isStreaming, onStop, tutorMode, onSaveNote, isNoteSaving }) {
+export default function ChatComposer({ onSend, isStreaming, onStop, tutorMode, onSaveNote, isNoteSaving, aiEnabled = true }) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [input, setInput] = useState('');
@@ -29,6 +29,7 @@ export default function ChatComposer({ onSend, isStreaming, onStop, tutorMode, o
   const fileInputRef = useRef(null);
 
   const handleSend = () => {
+    if (!aiEnabled) return;
     const text = input;
     if (!text.trim() && !attachment) return;
     onSend(text, attachment);
@@ -115,11 +116,13 @@ export default function ChatComposer({ onSend, isStreaming, onStop, tutorMode, o
                   key={q.labelKey}
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
+                  disabled={!aiEnabled}
                   onClick={() => {
+                    if (!aiEnabled) return;
                     onSend(t(q.promptKey));
                     setShowQuickPrompts(false);
                   }}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-text hover:bg-card-hover transition-all duration-150 text-left group border border-transparent hover:border-border"
+                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-text hover:bg-card-hover transition-all duration-150 text-left group border border-transparent hover:border-border disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary-light flex items-center justify-center shrink-0 border border-primary/15">
                     <Icon name={q.icon} size={16} />
@@ -221,8 +224,9 @@ export default function ChatComposer({ onSend, isStreaming, onStop, tutorMode, o
             <Tooltip label={t('chat.attachImage')}>
               <button
                 onClick={handleAttach}
+                disabled={!aiEnabled}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 shrink-0 mb-1",
+                  "flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 shrink-0 mb-1 disabled:opacity-40 disabled:cursor-not-allowed",
                   attachment
                     ? "bg-primary/10 text-primary-light"
                     : "bg-card-hover text-text-secondary hover:text-text"
@@ -250,7 +254,10 @@ export default function ChatComposer({ onSend, isStreaming, onStop, tutorMode, o
             onChange={autoResize}
             onKeyDown={handleKeyDown}
             rows={1}
-            placeholder={tutorMode
+            disabled={!aiEnabled}
+            placeholder={!aiEnabled
+              ? t('chat.aiDisabledPlaceholder', 'AI nonaktif — isi GROQ_API_KEY dulu untuk chat AI')
+              : tutorMode
               ? t('chat.inputPlaceholderTutor', 'Tanya topik apapun ke tutor AI...')
               : t('chat.inputPlaceholderNormal', 'Ketik pesanmu...')}
             className="w-full resize-none bg-transparent px-2 py-2 text-15 leading-6 text-text placeholder:text-text-muted focus:outline-none max-h-[144px] overflow-y-hidden"
@@ -282,7 +289,7 @@ export default function ChatComposer({ onSend, isStreaming, onStop, tutorMode, o
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.15 }}
               onClick={handleSend}
-              disabled={!input.trim() && !attachment}
+              disabled={!aiEnabled || (!input.trim() && !attachment)}
               whileTap={{ scale: 0.9 }}
               className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-solid text-white hover:bg-primary-solid-hover disabled:opacity-35 disabled:cursor-not-allowed transition-all duration-150 shrink-0 mb-1 shadow-card"
               aria-label={t('chat.send')}

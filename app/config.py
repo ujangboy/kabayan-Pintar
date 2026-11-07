@@ -12,20 +12,38 @@ SERVER_PORT = 7860
 
 # --- API Configurations ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+
+
+def is_ai_enabled(api_key: str | None = None) -> bool:
+    """AI hanya jalan bila key valid: diawali gsk_ + >=20 alfanumerik.
+
+    Placeholder dari .env.example (<...>) dan string kosong dianggap
+    NONAKTIF — web tetap boleh dibuka, hanya fitur AI yang mati.
+    """
+    key = (GROQ_API_KEY if api_key is None else api_key or "").strip()
+    if not key:
+        return False
+    if key.startswith("<") and key.endswith(">"):
+        return False
+    return bool(re.fullmatch(r"gsk_[A-Za-z0-9]{20,}", key))
+
+
+AI_ENABLED = is_ai_enabled()
+
+# Pesan spesifik agar user tahu langkah berikutnya (web tetap jalan tanpa AI).
 if not GROQ_API_KEY:
     logging.warning(
         "GROQ_API_KEY belum diatur — fitur AI (chat, tutor, quiz, exam) tidak akan "
-        "berfungsi. Isi file .env dan restart backend."
+        "berfungsi. Jalankan `kp start` untuk isi via terminal, atau isi file .env."
     )
 elif GROQ_API_KEY.startswith("<") and GROQ_API_KEY.endswith(">"):
-    logging.error(
+    logging.warning(
         "[SECRET-FORMAT] GROQ_API_KEY masih placeholder dari .env.example "
         "(%s). Ganti dengan key asli dari https://console.groq.com/keys "
-        "lalu restart backend.", GROQ_API_KEY
+        "lalu restart backend. Web tetap bisa dibuka; hanya AI yang mati.",
+        GROQ_API_KEY,
     )
-elif not re.fullmatch(r"gsk_[A-Za-z0-9]{20,}", GROQ_API_KEY):
-    # Fail-loud: key salah format (mis. terpotong, typo, atau key dari
-    # screenshot yang tidak lengkap) akan membuat semua request Groq gagal.
+elif not is_ai_enabled():
     logging.error(
         "[SECRET-FORMAT] GROQ_API_KEY terdeteksi format tidak valid — harus diawali "
         "'gsk_' diikuti >=20 karakter alfanumerik. Periksa kembali isi .env. "

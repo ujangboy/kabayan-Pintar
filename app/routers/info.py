@@ -32,10 +32,13 @@ async def get_app_info():
     finally:
         db.close()
 
+    from app import config as _config
+
     return JSONResponse({
         "app_name": "Kabayan Pintar",
         "version": APP_VERSION,
         "description": "Ruang belajar cerdas berbasis AI: materi, chat, flashcard, quiz, dan simulasi ujian.",
         "install_id": install_id,
         "fresh_install": fresh_install,
+        "ai_enabled": _config.is_ai_enabled(),
     })

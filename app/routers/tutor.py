@@ -92,6 +92,18 @@ async def tutor_chat(request: TutorChatRequest, db: Session = Depends(get_db)):
     The first bytes "\x00TYPE:<type>\x00" are metadata and should be stripped by the client.
     """
     try:
+        from app import config as _config
+        if not _config.is_ai_enabled():
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "detail": (
+                        "AI nonaktif — GROQ_API_KEY belum diatur valid. "
+                        "Isi di .env (https://console.groq.com/keys) lalu restart backend. "
+                        "Fitur lain tetap bisa dipakai."
+                    )
+                },
+            )
         # Persist or get chat session — session_id disanitasi (alphanumeric +
         # dash) agar string arbitrer tidak men-spam row Chat baru. Frontend
         # mengirim String(chatId) numerik, bukan UUID, jadi jangan ketat.

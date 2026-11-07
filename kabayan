@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# kabayan — alias dari kp (perintah global, sama persis).
+# Pasang global: ln -s "$PWD/kp" ~/.local/bin/kp && ln -s "$PWD/kabayan" ~/.local/bin/kabayan
+# Atau copy file ini ke ~/.local/bin/kabayan lalu set PATH. Lihat README "Dari folder mana saja".
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec bash "$DIR/kp" "$@"

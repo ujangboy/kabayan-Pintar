@@ -82,6 +82,17 @@ async def chat_endpoint(request: ChatRequest, db: Session = Depends(get_db)):
     import asyncio
     import os
     from fastapi.responses import StreamingResponse
+    if not config.is_ai_enabled():
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": (
+                    "AI nonaktif — GROQ_API_KEY belum diatur valid. "
+                    "Isi di .env (https://console.groq.com/keys) lalu restart backend. "
+                    "Fitur lain tetap bisa dipakai."
+                )
+            },
+        )
     try:
         from app.services.ai_service import ai_service
 
@@ -207,6 +218,18 @@ def chat_vision_endpoint(
     try:
         from app.services.ai_service import ai_service
         from app.services.image_service import prepare_image
+
+        if not config.is_ai_enabled():
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "detail": (
+                        "AI nonaktif — GROQ_API_KEY belum diatur valid. "
+                        "Isi di .env (https://console.groq.com/keys) lalu restart backend. "
+                        "Fitur lain tetap bisa dipakai."
+                    )
+                },
+            )
 
         # Cek ukuran SEBELUM membaca seluruh isi request ke memori
         # (file.size diisi Starlette dari parsing multipart).

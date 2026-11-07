@@ -289,7 +289,7 @@ async def health_check():
         "FastAPI": "OK",
         "SQLite": "ERROR",
         "Schema_Materials": "ERROR",
-        "Groq API": "OK" if config.GROQ_API_KEY else "ERROR",
+        "Groq API": "OK" if config.is_ai_enabled() else "ERROR",
         "LanceDB": (
             "OK"
             if os.path.isdir(config.LANCEDB_DIR) and os.access(config.LANCEDB_DIR, os.W_OK)
