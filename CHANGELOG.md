@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.6.0...v0.7.0) (2026-11-07)
+
+
+### Bug Fixes
+
+* core tetap nyala tanpa extra documents/media, auto-repair shim kp lama ([da43f14](https://github.com/ujangboy/kabayan-Pintar/commit/da43f14dbb22cf30e4e96a08395334f960bfdad9))
+
 ## [0.6.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.5.0...v0.6.0) (2026-11-07)
 
 
