@@ -170,13 +170,54 @@ def show_banner(ai_on: bool) -> None:
     print("  Tekan Ctrl+C untuk berhenti.\n")
 
 
+def ensure_global_links() -> None:
+    """Daftarkan kp/kabayan global bila belum ada (Windows PATH / Linux symlink).
+
+    Idempoten. Dipanggil otomatis setelah install sukses agar pemula tidak
+    perlu langkah manual — cukup tutup & buka lagi terminal lalu ketik
+    'kp start' / 'kabayan start'.
+    """
+    if os.name == "nt":
+        p = os.path.join(BASE_DIR, "scripts", "install_windows_path.ps1")
+        if os.path.isfile(p):
+            try:
+                subprocess.call(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                                 "-File", p], cwd=BASE_DIR)
+                print("==> PATH proyek terdaftar otomatis. Tutup & buka lagi terminal, lalu ketik: kp start")
+            except FileNotFoundError:
+                print("[!] powershell tidak ditemukan. Jalankan manual: powershell -ExecutionPolicy Bypass -File scripts\\install_windows_path.ps1")
+        return
+    bindir = os.path.expanduser("~/.local/bin")
+    try:
+        os.makedirs(bindir, exist_ok=True)
+        for name in ("kp", "kabayan"):
+            src = os.path.join(BASE_DIR, name)
+            dst = os.path.join(bindir, name)
+            if os.path.isfile(src):
+                try:
+                    if os.path.lexists(dst):
+                        os.remove(dst)
+                    os.symlink(src, dst)
+                except OSError:
+                    break
+        if (os.pathsep + bindir) in (os.pathsep + os.environ.get("PATH", "")):
+            print("==> Perintah global terdaftar: kp / kabayan (kini ketik 'kp start' dari folder mana saja).")
+        else:
+            print(f"==> Symlink dibuat di {bindir}. Tambahkan ke PATH bila belum ada.")
+    except OSError:
+        pass
+
+
 def run_install() -> int:
     if os.name == "nt":
         cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
                "-File", os.path.join(BASE_DIR, "scripts", "install_windows.ps1"), "-Mode", "core"]
     else:
         cmd = ["bash", os.path.join(BASE_DIR, "scripts", "install.sh"), "core"]
-    return subprocess.call(cmd, cwd=BASE_DIR)
+    code = subprocess.call(cmd, cwd=BASE_DIR)
+    if code == 0:
+        ensure_global_links()
+    return code
 
 
 def run_fresh() -> int:
@@ -191,8 +232,12 @@ def run_fresh() -> int:
         dst = src + ".fresh.bak"
         if os.path.isdir(src) and not os.path.isdir(dst):
             shutil.copytree(src, dst)
-        return subprocess.call(cmd, cwd=BASE_DIR)
-    return subprocess.call(["bash", os.path.join(BASE_DIR, "scripts", "install.sh"), "--fresh"], cwd=BASE_DIR)
+        code = subprocess.call(cmd, cwd=BASE_DIR)
+    else:
+        code = subprocess.call(["bash", os.path.join(BASE_DIR, "scripts", "install.sh"), "--fresh"], cwd=BASE_DIR)
+    if code == 0:
+        ensure_global_links()
+    return code
 
 
 def run_feature(name: str) -> int:
@@ -205,7 +250,10 @@ def run_feature(name: str) -> int:
                "-Mode", "feature", "-Feature", name]
     else:
         cmd = ["bash", os.path.join(BASE_DIR, "scripts", "install.sh"), "feature", name]
-    return subprocess.call(cmd, cwd=BASE_DIR)
+    code = subprocess.call(cmd, cwd=BASE_DIR)
+    if code == 0:
+        ensure_global_links()
+    return code
 
 
 def cmd_start() -> int:

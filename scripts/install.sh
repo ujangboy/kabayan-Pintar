@@ -97,6 +97,21 @@ save_feature() {
     fi
 }
 
+# ── Daftarkan kp/kabayan global (Linux/WSL) ─────────────────────────
+# Idempoten: buat symlink ~/.local/bin/kp dan kabayan bila belum ada.
+ensure_global_links() {
+    local bindir="$HOME/.local/bin"
+    mkdir -p "$bindir"
+    ln -sf "$PWD/kp" "$bindir/kp"
+    ln -sf "$PWD/kabayan" "$bindir/kabayan"
+    if [[ ":$PATH:" == *":$bindir:"* ]]; then
+        log "Perintah global terdaftar: kp / kabayan (kini ketik 'kp start' dari folder mana saja)."
+    else
+        log "[!] $bindir belum di PATH. Tambahkan: export PATH=\"$bindir:\$PATH\" (lalu simpan di ~/.bashrc)."
+        log "Atau jalankan dari folder proyek via ./kp start."
+    fi
+}
+
 # ── Main ────────────────────────────────────────────────────────────
 case "${1:-core}" in
     core|--install|install)
@@ -105,7 +120,8 @@ case "${1:-core}" in
         ensure_venv
         install_deps core
         save_feature core
-        log "Instalasi core selesai. Jalankan './kp start' untuk memulai aplikasi."
+        ensure_global_links
+        log "Instalasi core selesai. Jalankan './kp start' atau 'kp start' untuk memulai aplikasi."
         ;;
     --fresh|fresh)
         check_python
@@ -114,6 +130,7 @@ case "${1:-core}" in
         ensure_venv
         install_deps core
         save_feature core
+        ensure_global_links
         log "Instalasi fresh selesai. Data lama disimpan di .env.fresh.bak dan storage.fresh.bak."
         ;;
     feature)
@@ -126,7 +143,8 @@ case "${1:-core}" in
                 ensure_venv
                 install_deps "$feature"
                 save_feature "$feature"
-                log "Fitur '$feature' terpasang. Jalankan './kp start' untuk memulai aplikasi."
+                ensure_global_links
+                log "Fitur '$feature' terpasang. Jalankan './kp start' atau 'kp start' untuk memulai aplikasi."
                 ;;
             *)
                 err "Fitur tidak dikenal: '$feature'. Pilihan: rag, documents, media, all"

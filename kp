@@ -48,7 +48,14 @@ cmd_start() {
 
   # Launcher python terpusat: tanya API satu-satu + banner port/fitur.
   if [ -f "scripts/kp.py" ]; then
-    exec python3 scripts/kp.py start
+    if command -v python3 >/dev/null 2>&1; then
+      exec python3 scripts/kp.py start
+    elif command -v python >/dev/null 2>&1; then
+      exec python scripts/kp.py start
+    else
+      echo "[!] Python tidak ditemukan di PATH (python3/python). Install Python 3.12 lalu jalankan: kp --install"
+      exit 1
+    fi
   fi
 
   echo "==> Kabayan Pintar sedang berjalan..."

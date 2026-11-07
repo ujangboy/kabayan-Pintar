@@ -90,11 +90,12 @@ cd kabayan-pintar
 Installer akan:
 
 1. Membuat `.env` dari `.env.example` jika belum ada.
-2. Memeriksa Python.
+2. Memeriksa Python (`py`/`python`/`python3`).
 3. Memasang `uv` jika belum tersedia.
 4. Membuat folder `.venv`.
 5. Memasang **core dependencies saja**.
 6. Tidak menyentuh `storage/` pada instalasi pertama.
+7. Mendaftarkan `kp`/`kabayan` secara global (PATH Windows / symlink Linux).
 
 Dari folder proyek, jalankan `./kp` (Linux) atau `.\kp.cmd` (Windows) untuk menjalankan aplikasi.
 
@@ -104,21 +105,18 @@ Setelah install sekali, perintah `kp` dan `kabayan` bisa dipanggil dari
 folder mana pun — keduanya memanggil launcher python terpusat
 `scripts/kp.py` (stdlib, tanpa reinstall library).
 
-- **Linux/WSL:** symlink ke `~/.local/bin` (pastikan ada di PATH):
-  ```bash
-  ln -sf "$PWD/kp" ~/.local/bin/kp
-  ln -sf "$PWD/kabayan" ~/.local/bin/kabayan
-  kp --help   # atau ketik: kp start
-  kabayan start
-  ```
-- **Windows (PowerShell):** daftarkan folder proyek ke PATH user:
+- **Linux/WSL:** otomatis dibuatkan symlink `~/.local/bin/kp` dan
+  `kabayan` oleh installer (`kp --install` / `./kp --install`). Bila
+  `~/.local/bin` belum di PATH, installer memberi tahu cara
+  menambahkannya. Lalu cukup ketik `kp start` (atau `kabayan start`).
+- **Windows (PowerShell):** folder proyek langsung didaftarkan ke PATH
+  user oleh installer (`.\kp --install`) — **tidak perlu** jalankan
+  `scripts\install_windows_path.ps1` secara manual lagi. Cukup
+  **tutup lalu buka lagi terminal**, lalu:
   ```powershell
-  powershell -ExecutionPolicy Bypass -File scripts\install_windows_path.ps1
-  # Tutup lalu buka lagi terminal, lalu:
-  kp start
-  kabayan start
+  kp start        # atau: kabayan start
   ```
-  Tanpa langkah ini, tetap bisa jalan dari folder proyek via
+  Tanpa daftar PATH ini, tetap bisa jalan dari folder proyek via
   `.\kp.cmd` / `.\kabayan.cmd`. Port tetap **8000** setelah
   inisialisasi (lihat banner terminal).
 
@@ -232,6 +230,8 @@ Rename-Item .venv .venv-linux
 ### Troubleshooting
 
 - **`uv` tidak ditemukan** → installer otomatis mencobanya; pastikan internet.
+- **`kp` tidak ditemukan setelah install** → tutup lalu buka lagi terminal (PATH Windows baru dibaca terminal baru). Bila masih tidak ketemu, jalankan `.\kp.cmd start` dari folder proyek, atau jalankan manual sekali: `powershell -ExecutionPolicy Bypass -File scripts\install_windows_path.ps1`.
+- **`python` tidak ditemukan** (py/python/python3 tidak ada di PATH) → install Python 3.12 dulu, contoh: `winget install Python.Python.3.12`, lalu buka terminal baru dan jalankan `kp --install` lagi.
 - **Port 8000 sudah dipakai** → tutup aplikasi/instance lain pada port itu.
 - **Fitur AI error** → cek `GROQ_API_KEY` di `.env`.
 - **RAG error** → jalankan `./kp feature rag`.

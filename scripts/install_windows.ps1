@@ -17,9 +17,10 @@ function Log ($msg) { Write-Host "==> $msg" }
 function Err ($msg) { Write-Host "[!] $msg" -ForegroundColor Red; exit 1 }
 
 function Check-Python {
-    if (-not (Get-Command python3 -ErrorAction SilentlyContinue)) {
-        Err "Python 3 tidak ditemukan. Silakan install Python terlebih dahulu."
-    }
+    if (Get-Command py -ErrorAction SilentlyContinue) { return }
+    if (Get-Command python -ErrorAction SilentlyContinue) { return }
+    if (Get-Command python3 -ErrorAction SilentlyContinue) { return }
+    Err "Python tidak ditemukan di PATH (py/python/python3). Install Python 3.12 dulu, contoh: winget install Python.Python.3.12 lalu buka terminal baru."
 }
 
 function Ensure-UV {
@@ -50,6 +51,15 @@ function Save-Feature ([string]$f) {
     }
 }
 
+# Daftarkan folder proyek ke PATH user (idempoten) agar `kp`/`kabayan`
+# bisa diketik dari terminal mana saja setelah install. Tidak perlu manual.
+function Register-Kp-Path {
+    $p = Join-Path $DIR "install_windows_path.ps1"
+    if (Test-Path $p) {
+        & $p
+    }
+}
+
 function Install-Deps ([string]$Groups) {
     Log "Memasang dependensi: $Groups"
     $activate = ".venv\Scripts\Activate.ps1"
@@ -73,6 +83,8 @@ switch ($Mode) {
         Install-Deps "core"
         Save-Feature "core"
         Log "Instalasi core selesai. Jalankan '.\kp.cmd start' untuk memulai aplikasi."
+        Register-Kp-Path
+        Log "PATH proyek terdaftar otomatis. Tutup lalu buka lagi terminal, lalu ketik: kp start (atau kabayan start)."
     }
     "feature" {
         if (-not $Feature) { Err "Sebutkan Feature: rag, documents, media, all" }
@@ -83,6 +95,7 @@ switch ($Mode) {
             "all"       { Check-Python; Ensure-UV; Ensure-Venv; Install-Deps "all";       Save-Feature "all";       Log "Semua fitur terpasang." }
             default     { Err "Fitur tidak dikenal: '$Feature'. Pilihan: rag, documents, media, all" }
         }
+        Register-Kp-Path
     }
     default {
         Err "Penggunaan: .\install_windows.ps1 [-Mode core|feature] [-Feature <rag|documents|media|all>]"
