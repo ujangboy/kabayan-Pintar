@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.5.0...v0.6.0) (2026-11-07)
+
+
+### Features
+
+* daftarkan kp/kabayan ke PATH otomatis setelah install, temukan python di Windows ([d707c84](https://github.com/ujangboy/kabayan-Pintar/commit/d707c84bcad0327e8373bf02154f125b6c544ba8))
+
 ## [0.5.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.4.0...v0.5.0) (2026-11-07)
 
 
