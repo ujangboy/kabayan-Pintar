@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/ujangboy/kabayan-Pintar/compare/v0.8.0...v0.8.1) (2026-11-08)
+
+
+### Chores
+
+* hapus direktori runtime `.kilo` dari repositori dan abaikan via `.gitignore` ([28582c0](https://github.com/ujangboy/kabayan-Pintar/commit/28582c0))
+
 ## [0.8.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.7.0...v0.8.0) (2026-11-08)
 
 
