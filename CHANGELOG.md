@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.7.0...v0.8.0) (2026-11-08)
+
+
+### Bug Fixes
+
+* startup core tanpa youtube-transcript-api, feature all pasang extra nyata ([5d07cbc](https://github.com/ujangboy/kabayan-Pintar/commit/5d07cbc7c6414a233585b43edd6f457cf87da109))
+
 ## [0.7.0](https://github.com/ujangboy/kabayan-Pintar/compare/v0.6.0...v0.7.0) (2026-11-07)
 
 
