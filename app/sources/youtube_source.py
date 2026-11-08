@@ -7,13 +7,19 @@ import tempfile
 import urllib.request
 import logging
 from typing import List, Tuple, Dict
-from youtube_transcript_api import YouTubeTranscriptApi
+
+try:
+    from youtube_transcript_api import YouTubeTranscriptApi
+except ImportError:
+    YouTubeTranscriptApi = None
+
 from app.sources.base_source import BaseSource, Document
 from app import config
 
 logger = logging.getLogger(__name__)
 
 WHISPER_MODEL = "whisper-large-v3"
+_MEDIA_MISSING_MSG = "fitur media (YouTube/TTS) belum terpasang. Jalankan 'kp feature media'."
 
 
 def _groq_transcribe_audio(file_path: str) -> Dict:
@@ -372,6 +378,8 @@ class YoutubeSource(BaseSource):
                     pass
 
     def _get_transcript_with_duration(self, progress_cb=None):
+        if YouTubeTranscriptApi is None:
+            raise ValueError(_MEDIA_MISSING_MSG)
         # Priority: transcript API → yt-dlp subtitles → Whisper
         if progress_cb:
             progress_cb("Mengambil transkrip via API YouTube...", 30)

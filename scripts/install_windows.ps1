@@ -2,7 +2,8 @@
 # Usage:
 #   .\install_windows.ps1
 #   .\install_windows.ps1 -Mode feature -Feature rag
-#   .\install_windows.ps1 -Mode feature -Feature all
+#   .\install_windows.ps1 -Mode feature -Feature all   # rag+documents+media
+#   .\install_windows.ps1 -Mode feature -Feature dev
 
 param(
     [string]$Mode = "core",
@@ -89,6 +90,9 @@ function Install-Deps ([string]$Groups) {
     . $activate
     if ($Groups -eq "core") {
         & uv sync
+    } elseif ($Groups -eq "all") {
+        # pyproject tidak punya extra "all"; terjemahkan ke tiga extra nyata.
+        & uv sync --extra rag --extra documents --extra media
     } else {
         & uv sync --extra $Groups
     }
@@ -107,17 +111,18 @@ switch ($Mode) {
         Log "PATH proyek terdaftar otomatis. Tutup lalu buka lagi terminal, lalu ketik: kp start (atau kabayan start)."
     }
     "feature" {
-        if (-not $Feature) { Err "Sebutkan Feature: rag, documents, media, all" }
+        if (-not $Feature) { Err "Sebutkan Feature: rag, documents, media, all, dev" }
         switch ($Feature) {
             "rag"       { Check-Python; Ensure-UV; Ensure-Venv; Install-Deps "rag";       Save-Feature "rag";       Log "Fitur 'rag' terpasang." }
             "documents" { Check-Python; Ensure-UV; Ensure-Venv; Install-Deps "documents"; Save-Feature "documents"; Log "Fitur 'documents' terpasang." }
             "media"     { Check-Python; Ensure-UV; Ensure-Venv; Install-Deps "media";     Save-Feature "media";     Log "Fitur 'media' terpasang." }
             "all"       { Check-Python; Ensure-UV; Ensure-Venv; Install-Deps "all";       Save-Feature "all";       Log "Semua fitur terpasang." }
-            default     { Err "Fitur tidak dikenal: '$Feature'. Pilihan: rag, documents, media, all" }
+            "dev"       { Check-Python; Ensure-UV; Ensure-Venv; Install-Deps "dev";       Save-Feature "dev";       Log "Fitur 'dev' (testing) terpasang." }
+            default     { Err "Fitur tidak dikenal: '$Feature'. Pilihan: rag, documents, media, all, dev" }
         }
         Register-Kp-Path
     }
     default {
-        Err "Penggunaan: .\install_windows.ps1 [-Mode core|feature] [-Feature <rag|documents|media|all>]"
+        Err "Penggunaan: .\install_windows.ps1 [-Mode core|feature] [-Feature <rag|documents|media|all|dev>]"
     }
 }

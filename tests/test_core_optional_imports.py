@@ -26,6 +26,46 @@ def test_extract_txt_still_works_without_extras(tmp_path):
     assert document_parser.extract_text(str(p)) == "halo kabayan"
 
 
+def test_youtube_source_importable_without_media_extra():
+    # Simulasikan core: youtube-transcript-api hilang → app.main tetap
+    # bisa import; pemakaian YouTube menolak dengan pesan feature media.
+    import sys
+
+    class _Missing:
+        def __getattr__(self, name):
+            raise ImportError("simulated missing")
+
+    saved = sys.modules.get("youtube_transcript_api")
+    sys.modules["youtube_transcript_api"] = _Missing()
+    sys.modules.pop("app.sources.youtube_source", None)
+    try:
+        from app.sources import youtube_source
+
+        assert youtube_source.YouTubeTranscriptApi is None
+        source = youtube_source.YoutubeSource("https://youtu.be/dQw4w9WgXcQ")
+        try:
+            source._get_transcript_with_duration()
+        except ValueError as e:
+            assert "feature media" in str(e)
+        else:
+            raise AssertionError("YouTube harus menolak dengan pesan feature media")
+    finally:
+        if saved is None:
+            sys.modules.pop("youtube_transcript_api", None)
+        else:
+            sys.modules["youtube_transcript_api"] = saved
+        sys.modules.pop("app.sources.youtube_source", None)
+
+
+def test_feature_all_maps_to_real_extras():
+    # pyproject tidak punya extra "all"; kedua installer harus menerjemahkan
+    # ke extra nyata (regresi: uv error "Extra `all` is not defined").
+    root = Path(__file__).resolve().parents[1]
+    expected = "--extra rag --extra documents --extra media"
+    assert expected in (root / "scripts" / "install.sh").read_text(encoding="utf-8")
+    assert expected in (root / "scripts" / "install_windows.ps1").read_text(encoding="utf-8")
+
+
 def test_audio_service_importable_without_media_extra(monkeypatch):
     # Simulasikan core: edge_tts/imageio-ffmpeg hilang → audio_service
     # tetap bisa diimport, generate menolak dengan pesan jelas.

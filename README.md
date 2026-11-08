@@ -152,18 +152,22 @@ Backend membuka URL:
 | Fitur | `kp feature` | Kebutuhan tambahan |
 |---|---|---|
 | AI Chat, Tutor, Flashcard, Quiz | **Core** (otomatis) | Groq API key |
-| Pencarian vektor / RAG lokal | `./kp feature rag` | ~250 MB tambahan, tunjang untuk dokumen besar |
-| Pemrosesan dokumen (PDF, DOCX, XLSX, PPTX) | `./kp feature documents` | PyMuPDF, python-docx, openpyxl, python-pptx |
-| YouTube, TTS, media | `./kp feature media` | yt-dlp, edge-tts, imageio-ffmpeg |
-| Semua fitur | `./kp feature all` | Semua di atas |
-| Development / testing | `./kp feature dev` | pytest, httpx, pytest-asyncio |
+| Pencarian vektor / RAG lokal | `kp feature rag` | ~250 MB tambahan, tunjang untuk dokumen besar |
+| Pemrosesan dokumen (PDF, DOCX, XLSX, PPTX) | `kp feature documents` | PyMuPDF, python-docx, openpyxl, python-pptx |
+| YouTube, TTS, media | `kp feature media` | yt-dlp, youtube-transcript-api, edge-tts, imageio-ffmpeg |
+| Semua fitur | `kp feature all` | rag + documents + media sekaligus |
+| Development / testing | `kp feature dev` | pytest, httpx, pytest-asyncio |
 
 Contoh:
 
 ```bash
-./kp feature rag          # Linux
-.\kp.cmd feature rag      # Windows
+kp feature rag            # Linux/WSL, setelah PATH aktif (dari folder mana saja)
+.\kp.cmd feature rag      # Windows, dari folder proyek
 ```
+
+> Windows/PowerShell: gunakan `kp` (setelah PATH terdaftar) atau
+> `.\kp.cmd` — jangan `./kp`. Jangan menambahkan `\` di akhir perintah
+> (mis. `kp feature all\`), karena PowerShell menganggapnya bagian argumen.
 
 ### Instalasi fresh
 
@@ -235,9 +239,10 @@ Rename-Item .venv .venv-linux
 - **`python` tidak ditemukan** (py/python/python3 tidak ada di PATH) → install Python 3.12 dulu, contoh: `winget install Python.Python.3.12`, lalu buka terminal baru dan jalankan `kp --install` lagi.
 - **Port 8000 sudah dipakai** → tutup aplikasi/instance lain pada port itu.
 - **Fitur AI error** → cek `GROQ_API_KEY` di `.env`.
-- **RAG error** → jalankan `./kp feature rag`.
-- **Dokumen tidak terbaca** → jalankan `./kp feature documents`.
-- **YouTube/TTS bermasalah** → jalankan `./kp feature media`.
+- **RAG error** → jalankan `kp feature rag` (Linux) / `.\kp.cmd feature rag` (Windows).
+- **Dokumen tidak terbaca** → jalankan `kp feature documents` / `.\kp.cmd feature documents`.
+- **YouTube/TTS bermasalah** → jalankan `kp feature media` / `.\kp.cmd feature media`.
+- **Backend crash saat start dengan `ModuleNotFoundError`** → fitur opsional belum terpasang. Core sudah aman (tidak crash), tapi jalankan `kp feature all` untuk RAG + dokumen + media sekaligus.
 
 ---
 

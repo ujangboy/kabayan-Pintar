@@ -317,7 +317,7 @@ def main(argv: list[str]) -> int:
         print("  kp --fresh       # backup .env+storage, install bersih")
         print("  kp feature rag   # ekstra RAG (~250MB)")
         return 0
-    print("Penggunaan: kp [--install|--fresh|feature rag|documents|media|all|start]")
+    print("Penggunaan: kp [--install|--fresh|feature rag|documents|media|all|dev|start]")
     return 1
 
 

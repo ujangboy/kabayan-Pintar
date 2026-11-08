@@ -2,9 +2,12 @@
 from app.config import is_ai_enabled
 
 
-def test_ai_disabled_when_empty_or_placeholder():
+def test_ai_disabled_when_empty_or_placeholder(monkeypatch):
     assert is_ai_enabled("") is False
     assert is_ai_enabled("<isi-groq-api-key-anda-di-sini>") is False
+    # None = pakai GROQ_API_KEY global; paksa kosong agar tidak bergantung .env lokal.
+    import app.config as config
+    monkeypatch.setattr(config, "GROQ_API_KEY", "")
     assert is_ai_enabled(None) is False
 
 

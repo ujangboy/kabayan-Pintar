@@ -7,7 +7,8 @@
 #   bash install.sh feature rag            # pasang extra RAG
 #   bash install.sh feature documents      # pasang extra dokumen
 #   bash install.sh feature media          # pasang extra media
-#   bash install.sh feature all            # pasang semua extra
+#   bash install.sh feature all            # pasang semua extra (rag+documents+media)
+#   bash install.sh feature dev            # pasang alat testing
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -70,6 +71,9 @@ install_deps() {
     . .venv/bin/activate
     if [ "$groups" = "core" ]; then
         uv sync
+    elif [ "$groups" = "all" ]; then
+        # pyproject tidak punya extra "all"; terjemahkan ke tiga extra nyata.
+        uv sync --extra rag --extra documents --extra media
     else
         uv sync --extra "$groups"
     fi
@@ -135,9 +139,9 @@ case "${1:-core}" in
         ;;
     feature)
         shift || true
-        local feature="${1:-}"
+        feature="${1:-}"
         case "$feature" in
-            rag|documents|media|all)
+            rag|documents|media|all|dev)
                 check_python
                 ensure_uv
                 ensure_venv
@@ -152,6 +156,6 @@ case "${1:-core}" in
         esac
         ;;
     *)
-        err "Penggunaan: bash install.sh [core|--install|--fresh|feature <rag|documents|media|all>]"
+        err "Penggunaan: bash install.sh [core|--install|--fresh|feature <rag|documents|media|all|dev>]"
         ;;
 esac
