@@ -294,8 +294,16 @@ def cmd_start() -> int:
                                 "--host", "127.0.0.1", "--port", "8000"], cwd=BASE_DIR)
     if os.path.isdir(os.path.join(BASE_DIR, "frontend", "node_modules")):
         # Development: frontend vite di 5173 + backend 8000
+        # Paksa PATH agar 'python' di npm scripts = venv proyek.
+        # Tanpa ini, `python` bare bisa jatuh ke venv lain yang sedang
+        # aktif di shell user (mis. folder 'venv' lama) sehingga
+        # dependensi extra (fastembed/dst) tidak ditemukan.
+        env = dict(os.environ)
+        if py:
+            env["PATH"] = os.path.join(os.path.dirname(py), os.pathsep + env.get("PATH", ""))
+            env["VIRTUAL_ENV"] = os.path.dirname(os.path.dirname(py))
         return subprocess.call(["npm", "run", "dev:all"],
-                               cwd=os.path.join(BASE_DIR, "frontend"))
+                               cwd=os.path.join(BASE_DIR, "frontend"), env=env)
     return subprocess.call([py, "-m", "uvicorn", "app.main:app",
                             "--host", "127.0.0.1", "--port", "8000"], cwd=BASE_DIR)
 

@@ -32,7 +32,9 @@ rag = [
     "fastembed>=0.9.1",
     "lancedb>=0.41.0",
     "numpy",
+    "pandas",
     "pyarrow",
+    "pylance",
 ]
 
 # Pemrosesan dokumen (PDF, DOCX, XLSX, PPTX)
