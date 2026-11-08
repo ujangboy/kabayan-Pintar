@@ -4,7 +4,7 @@ Study workspace berbasis FastAPI + React untuk mengelola mata kuliah, materi,
 catatan, flashcard, quiz, simulasi ujian, dan tutor AI.
 
 Proyek ini dibangun dengan **vibe coding** — ditulis sejumlah besar oleh AI
-(Kilo/Claude) dengan panduan desain sistem dan arsitektur yang konsisten, lalu
+dengan panduan desain sistem dan arsitektur yang konsisten, lalu
 diverifikasi oleh manusia lewat tes dan audit. Cocok sebagai starter untuk
 proyek AI-assisted atau untuk dipelajari cara membangun aplikasi AI full-stack.
 
