@@ -183,7 +183,15 @@ class MaterialService:
                 try:
                     mat = material_repository.get(db, material_id)
                     if mat:
-                        self._remove_file(mat.filepath)
+                        # Simpan file ke trash DENGAN TrashItem (bukan yatim)
+                        # agar materi Failed bisa di-restore dari Pengaturan
+                        # > Data. Dulu trash_file() polos memutus pemetaan
+                        # sehingga file lenyap selamanya. Restore me-reindex
+                        # RAG, jadi status restored = Ready.
+                        from app.services.trash_service import trash_file_with_meta
+                        trash_file_with_meta(
+                            db, mat.filepath, "material", mat.id, mat.filename, "Ready"
+                        )
                         material_repository.update(db, mat, {"status": "Failed", "failure_reason": str(e), "filepath": None})
                         db.commit()
                 except Exception:

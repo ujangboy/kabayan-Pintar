@@ -137,3 +137,54 @@ def test_trash_retention_removes_only_old_files(db_session):
 
 def test_trash_file_ignores_missing(db_session):
     assert trash_file(os.path.join(config.UPLOADS_DIR, "tidak-ada.pdf")) is False
+
+
+def test_process_index_failure_trashes_file_restorably(
+    db_session, make_subject, make_material, monkeypatch
+):
+    """Regresi: kegagalan indexing RAG tidak boleh memutus rantai restore.
+
+    Dulu file dipindah via trash_file() polos (tanpa TrashItem) sehingga
+    materi Failed tidak pernah muncul di sampah dan file lenyap.
+    Sekarang harus ada TrashItem, dan restore_material harus
+    mengembalikan materi siap pakai (Ready + file ada + ter-index).
+    """
+    from app.models import TrashItem
+    from app.services import material_service as _ms
+    from app.services.trash_service import restore_material
+
+    subject = make_subject()
+    fp = os.path.join(config.UPLOADS_DIR, "rag_gagal.txt")
+    with open(fp, "w", encoding="utf-8") as f:
+        f.write("halo kabayan ini materi rag")
+    mat = make_material(subject.id, status="Processing", filepath=fp)
+
+    calls = {"n": 0}
+
+    def _flaky_index(doc_id, chunks):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise ImportError("Simulated missing fastembed")
+
+    monkeypatch.setattr(_ms.rag_service, "index_document", _flaky_index)
+
+    _ms.material_service.process_material_async(fp, f"mat_{mat.id}", mat.id)
+
+    db_session.expire_all()
+    db_session.refresh(mat)
+    assert mat.status == "Failed"
+    assert mat.failure_reason is not None
+
+    item = (
+        db_session.query(TrashItem)
+        .filter(TrashItem.material_id == mat.id, TrashItem.source_type == "material")
+        .one_or_none()
+    )
+    assert item is not None, "file gagal tanpa TrashItem -> tidak bisa di-restore"
+    assert item.trash_path and os.path.isfile(item.trash_path)
+
+    subject_id = restore_material(db_session, mat.id)
+    assert subject_id == subject.id
+    db_session.refresh(mat)
+    assert mat.filepath and os.path.isfile(mat.filepath)
+    assert mat.status == "Ready"
