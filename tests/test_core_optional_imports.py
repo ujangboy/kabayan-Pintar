@@ -31,13 +31,20 @@ def test_youtube_source_importable_without_media_extra():
     # bisa import; pemakaian YouTube menolak dengan pesan feature media.
     import sys
 
-    class _Missing:
-        def __getattr__(self, name):
-            raise ImportError("simulated missing")
-
+    # sys.modules[name] = None membuat `import name` berhenti dengan
+    # ImportError yang sejati — simulasi 'paket tidak terpasang' yang
+    # bekerja untuk `import edge_tts` polos (objek _Missing lama
+    # justru ter-return sebagai modul yang "ada" → HAS_EDGE_TTS True).
     saved = sys.modules.get("youtube_transcript_api")
-    sys.modules["youtube_transcript_api"] = _Missing()
+    sys.modules["youtube_transcript_api"] = None
     sys.modules.pop("app.sources.youtube_source", None)
+    # Hapus juga atribut package agar `from app.sources import
+    # youtube_source` benar-benar me-reimport (kalau hanya sys.modules
+    # yang dibersihkan, atribut package yang sudah terisi dari test
+    # lain di suite yang sama akan ter-return tanpa dieksekusi ulang).
+    pkg = sys.modules.get("app.sources")
+    if pkg is not None and hasattr(pkg, "youtube_source"):
+        delattr(pkg, "youtube_source")
     try:
         from app.sources import youtube_source
 
@@ -71,15 +78,18 @@ def test_audio_service_importable_without_media_extra(monkeypatch):
     # tetap bisa diimport, generate menolak dengan pesan jelas.
     import sys
 
-    class _Missing:
-        def __getattr__(self, name):
-            raise ImportError("simulated missing")
-
+    # Lihat catatan simulasi di test youtube: sys.modules[name] = None
+    # membuat import benar-benar berhenti dengan ImportError, yang
+    # ter-catch oleh try/except di audio_service (HAS_EDGE_TTS=False).
     saved = {k: sys.modules.get(k) for k in ("edge_tts", "imageio_ffmpeg")}
-    sys.modules["edge_tts"] = _Missing()
-    sys.modules["imageio_ffmpeg"] = _Missing()
-    # Pastikan modul media dimuat ulang dari nol
+    sys.modules["edge_tts"] = None
+    sys.modules["imageio_ffmpeg"] = None
+    # Pastikan modul media dimuat ulang dari nol (termasuk atribut
+    # package, agar reimport tidak ter-return basi dari test lain).
     sys.modules.pop("app.services.audio_service", None)
+    pkg = sys.modules.get("app.services")
+    if pkg is not None and hasattr(pkg, "audio_service"):
+        delattr(pkg, "audio_service")
     try:
         from app.services import audio_service
 
