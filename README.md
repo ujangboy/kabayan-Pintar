@@ -1,5 +1,10 @@
 # Kabayan Pintar
 
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/frontend-React%2019-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Study workspace berbasis FastAPI + React untuk mengelola mata kuliah, materi,
 catatan, flashcard, quiz, simulasi ujian, dan tutor AI.
 
@@ -37,6 +42,22 @@ API key Groq **tidak di-commit** — isi di `.env` milik Anda sendiri (lihat di 
 - `docs/` — aturan agent, baseline, konteks AI
 - `storage/` — database, upload, vector store (runtime, **tidak di-commit**)
 
+## Screenshots
+
+> Tampilan dengan data demo (bukan data pengguna nyata).
+
+| Dashboard | Mata Kuliah | Materi |
+| --- | --- | --- |
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Subjects](docs/screenshots/subjects.png) | ![Materi](docs/screenshots/materi.png) |
+
+| Notebook | Flashcard | Quiz |
+| --- | --- | --- |
+| ![Notebook](docs/screenshots/notebook.png) | ![Flashcard](docs/screenshots/flashcard.png) | ![Quiz](docs/screenshots/quiz.png) |
+
+| Chat |
+| --- |
+| ![Chat](docs/screenshots/chat.png) |
+
 ---
 
 ## Panduan pemasangan cepat
@@ -73,7 +94,7 @@ perintah `kp`.
 **Linux / WSL / Git Bash**
 
 ```bash
-git clone <repo-url> kabayan-pintar
+git clone https://github.com/ujangboy/kabayan-Pintar.git kabayan-pintar
 cd kabayan-pintar
 chmod +x kp
 ./kp --install
@@ -82,7 +103,7 @@ chmod +x kp
 **Windows (PowerShell / CMD)**
 
 ```powershell
-git clone <repo-url> kabayan-pintar
+git clone https://github.com/ujangboy/kabayan-Pintar.git kabayan-pintar
 cd kabayan-pintar
 .\kp --install
 ```
